@@ -3,9 +3,13 @@ package com.example.billingservice.web;
 import com.example.billingservice.entities.Bill;
 import com.example.billingservice.feign.CustomerRestClient;
 import com.example.billingservice.feign.ProductItemRestClient;
+import com.example.billingservice.model.Customer;
+import com.example.billingservice.model.Product;
 import com.example.billingservice.repository.BillRepository;
 import com.example.billingservice.repository.ProductItemRepository;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -16,7 +20,14 @@ public class BillingRestController {
     private ProductItemRestClient productItemRestClient;
 
     @GetMapping(path="/fullBill/{id}")
-    public Bill getBill(Long id){
-        Bill bill
+    public Bill getBill(@PathVariable(name="id") Long id){
+        Bill bill =billRepository.findById(id).get();
+        Customer customer=customerRestClient.getCustomerById(bill.getCustomerID());
+        bill.setCustomer(customer);
+        bill.getProductItems().forEach(pi->{
+            Product product=productItemRestClient.getProductById(pi.getProductID());
+            pi.setProduct(product);
+        });
+        return bill;
     }
 }
